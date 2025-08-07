@@ -1,37 +1,54 @@
-import http from 'http'
+import express from 'express'
 import fs from 'fs/promises'
 import url from 'url'
 import path from 'path'
+import 'dotenv/config'
+import router from './routes/index.js'
 
+const PORT = process.env.PORT || 4000
+const app = express()
 const __filename = url.fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
-const server = http.createServer(async (req, res) => {
-  let filePath
-  let contentType = 'text/html'
-
+app.get('/', async (req, res) => {
   try {
-    if (req.url === '/') {
-      filePath = path.join(__dirname, 'index.html')
-    } else if (req.url === '/about') {
-      filePath = path.join(__dirname, 'about.html')
-    } else if (req.url === '/contact-me') {
-      filePath = path.join(__dirname, 'contact-me.html')
-    } else if (req.url.endsWith('.css')) {
-      filePath = path.join(__dirname, req.url)
-      contentType = 'text/css'
-    } else {
-      filePath = path.join(__dirname, '404.html')
-    }
-
-    const data = await fs.readFile(filePath)
-    res.setHeader('Content-Type', contentType)
-    res.write(data)
-    res.end()
+    const data = await fs.readFile(path.join(__dirname, 'index.html'))
+    res.setHeader('Content-Type', 'text/html')
+    res.send(data)
   } catch (err) {
-    res.statusCode = 500
-    res.end('Internal Server Error')
+    res.status(500).send('Internal Server Error')
   }
 })
 
-server.listen(80)
+app.get('/about', async (req, res) => {
+  try {
+    const data = await fs.readFile(path.join(__dirname, 'about.html'))
+    res.setHeader('Content-Type', 'text/html')
+    res.send(data)
+  } catch (err) {
+    res.status(500).send('Internal Server Error')
+  }
+})
+
+app.get('/contact-me', async (req, res) => {
+  try {
+    const data = await fs.readFile(path.join(__dirname, 'contact-me.html'))
+    res.setHeader('Content-Type', 'text/html')
+    res.send(data)
+  } catch (err) {
+    res.status(500).send('Internal Server Error')
+  }
+})
+
+app.use(express.static(__dirname))
+
+app.use(async (req, res) => {
+  try {
+    const data = await fs.readFile(path.join(__dirname, '404.html'))
+    res.status(404).setHeader('Content-Type', 'text/html').send(data)
+  } catch (err) {
+    res.status(500).send('Internal Server Error')
+  }
+})
+
+app.listen(PORT)
